@@ -123,13 +123,6 @@ object desugar {
     else vdef
   }
 
-  def makeImplicitParameters(tpts: List[Tree], forPrimaryConstructor: Boolean)(implicit ctx: Context) =
-    for (tpt <- tpts) yield {
-       val paramFlags: FlagSet = if (forPrimaryConstructor) PrivateLocalParamAccessor else Param
-       val epname = ctx.freshName(nme.EVIDENCE_PARAM_PREFIX).toTermName
-       ValDef(epname, tpt, EmptyTree).withFlags(paramFlags | Implicit)
-    }
-
   /** Expand context bounds to evidence params. E.g.,
    *
    *      def f[T >: L <: H : B](params)
@@ -150,16 +143,19 @@ object desugar {
     val epbuf = new ListBuffer[ValDef]
     def desugarContextBounds(rhs: Tree): Tree = rhs match {
       case ContextBounds(tbounds, cxbounds) =>
-        for (cxbound <- cxbounds)
-          epbuf ++= makeImplicitParameters(cxbounds, isPrimaryConstructor)
+        for (cxbound <- cxbounds) {
+          val paramFlags: FlagSet = if (isPrimaryConstructor) PrivateLocalParamAccessor else Param
+          val epname = ctx.freshName(nme.EVIDENCE_PARAM_PREFIX).toTermName
+          epbuf += ValDef(epname, cxbound, EmptyTree).withFlags(paramFlags | Implicit)
+        }
         tbounds
       case PolyTypeTree(tparams, body) =>
         cpy.PolyTypeTree(rhs)(tparams, desugarContextBounds(body))
       case _ =>
         rhs
     }
-    val tparams1 = tparams mapConserve { tparam =>
-      cpy.TypeDef(tparam)(rhs = desugarContextBounds(tparam.rhs))
+    val tparams1 = tparams mapConserve { tdef =>
+      cpy.TypeDef(tdef)(rhs = desugarContextBounds(tdef.rhs))
     }
 
     val meth1 = addEvidenceParams(cpy.DefDef(meth)(tparams = tparams1), epbuf.toList)
@@ -682,11 +678,6 @@ object desugar {
           DefDef(param.name, Nil, Nil, TypeTree(), selector(idx)).withPos(param.pos)
       }
     Function(param :: Nil, Block(vdefs, body))
-  }
-
-  def makeImplicitFunction(formals: List[Type], body: Tree)(implicit ctx: Context): Tree = {
-    val params = makeImplicitParameters(formals.map(TypeTree), forPrimaryConstructor = false)
-    new ImplicitFunction(params, body)
   }
 
   /** Add annotation with class `cls` to tree:

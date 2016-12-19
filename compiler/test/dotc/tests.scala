@@ -85,7 +85,6 @@ class tests extends CompilerTest {
   val runDir        = testsDir + "run/"
   val newDir        = testsDir + "new/"
   val replDir       = testsDir + "repl/"
-  val javaDir       = testsDir + "pos-java-interop/"
 
   val sourceDir = "./src/"
   val dottyDir  = sourceDir + "dotty/"
@@ -299,6 +298,7 @@ class tests extends CompilerTest {
       dotcDir + "config/PathResolver.scala"
     ), List(/* "-Ylog:frontend", */ "-Xprompt") ++ staleSymbolError ++ twice)
 
+  val javaDir = "./tests/pos-java-interop/"
   @Test def java_all = compileFiles(javaDir, twice)
   //@Test def dotc_compilercommand = compileFile(dotcDir + "config/", "CompilerCommand")
 
@@ -387,10 +387,9 @@ class tests extends CompilerTest {
   @Test def tasty_tests = compileDir(testsDir, "tasty", testPickling)
 
   @Test def tasty_bootstrap = {
-    val logging = if (false) List("-Ylog-classpath", "-verbose") else Nil
-    val opt = List("-priorityclasspath", defaultOutputDir) ++ logging
+    val opt = List("-priorityclasspath", defaultOutputDir, "-Ylog-classpath")
     // first compile dotty
-    compileDir(dottyDir, ".", List("-deep", "-Ycheck-reentrant", "-strict") ++ logging)(allowDeepSubtypes)
+    compileDir(dottyDir, ".", List("-deep", "-Ycheck-reentrant", "-strict"))(allowDeepSubtypes)
 
     compileDir(libDir, "dotty", "-deep" :: opt)
     compileDir(libDir, "scala", "-deep" :: opt)

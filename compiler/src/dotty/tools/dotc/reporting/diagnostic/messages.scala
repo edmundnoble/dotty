@@ -224,8 +224,6 @@ object messages {
   extends Message(8) {
     val kind = "Member Not Found"
 
-    //println(i"site = $site, decls = ${site.decls}, source = ${site.widen.typeSymbol.sourceFile}") //DEBUG
-
     val msg = {
       import core.Flags._
       val maxDist = 3
@@ -608,7 +606,7 @@ object messages {
            |"""
   }
 
-  case class WrongNumberOfTypeArgs(fntpe: Type, expectedArgs: List[TypeParamInfo], actual: List[untpd.Tree])(implicit ctx: Context)
+  case class WrongNumberOfArgs(fntpe: Type, argKind: String, expectedArgs: List[TypeParamInfo], actual: List[untpd.Tree])(implicit ctx: Context)
   extends Message(22) {
     val kind = "Syntax"
 
@@ -630,7 +628,7 @@ object messages {
     }
 
     val msg =
-      hl"""|${NoColor(msgPrefix)} type arguments for $prettyName$expectedArgString
+      hl"""|${NoColor(msgPrefix)} ${argKind} arguments for $prettyName$expectedArgString
            |expected: $expectedArgString
            |actual:   $actualArgString""".stripMargin
 

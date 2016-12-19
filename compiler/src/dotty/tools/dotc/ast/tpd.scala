@@ -450,8 +450,7 @@ object tpd extends Trees.Instance[Type] with TypedTreeInfo {
       } else foldOver(sym, tree)
   }
 
-  override val cpy: TypedTreeCopier = // Type ascription needed to pick up any new members in TreeCopier (currently there are none)
-    new TypedTreeCopier
+  override val cpy = new TypedTreeCopier
 
   class TypedTreeCopier extends TreeCopier {
     def postProcess(tree: Tree, copied: untpd.Tree): copied.ThisTree[Type] =
